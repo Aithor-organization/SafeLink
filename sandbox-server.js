@@ -15,6 +15,7 @@
 import { WebSocketServer } from 'ws';
 import http from 'http';
 import { SandboxSession, SessionManager, validateUrl, log } from './sandbox-session.js';
+import { analyzeInBackground } from './live-analyzer.js';
 
 // ============================================
 // 상수 정의
@@ -115,9 +116,16 @@ wss.on('connection', async (ws, req) => {
 
   // 세션 생성
   const session = sessionManager.createSession(ws, {
-    onNavigation: (sess, url) => {
+    onNavigation: async (sess, url) => {
       log(`[Session ${sess.id}] 재분석 콜백 트리거: ${url}`);
-      // 여기서 AI 분석기 호출 가능
+      // AI 분석 실행
+      if (sess.page && sess.isActive) {
+        try {
+          await analyzeInBackground(sess.page, (msg) => sess.send(msg));
+        } catch (err) {
+          log(`[Session ${sess.id}] AI 분석 오류: ${err.message}`, 'ERROR');
+        }
+      }
     },
     onTimeout: (sess) => {
       log(`[Session ${sess.id}] 타임아웃 콜백 트리거`);
@@ -154,6 +162,11 @@ wss.on('connection', async (ws, req) => {
             const success = await session.initialize(message.url);
             if (success) {
               await session.startScreencast();
+              // AI 분석 시작 (백그라운드)
+              if (session.page && session.isActive) {
+                analyzeInBackground(session.page, (msg) => session.send(msg))
+                  .catch(err => log(`[Session ${session.id}] AI 분석 오류: ${err.message}`, 'ERROR'));
+              }
             }
           } else {
             session.sendStatus('error', 'URL이 필요합니다.');
@@ -173,6 +186,19 @@ wss.on('connection', async (ws, req) => {
         case 'keypress':
         case 'scroll':
           await session.handleInput(message);
+          break;
+
+        // 네비게이션
+        case 'goBack':
+          await session.goBack();
+          break;
+
+        case 'goForward':
+          await session.goForward();
+          break;
+
+        case 'reload':
+          await session.reload();
           break;
 
         // 세션 정보 요청

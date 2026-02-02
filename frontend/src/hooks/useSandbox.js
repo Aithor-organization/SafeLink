@@ -10,6 +10,7 @@ export function useSandbox() {
   const [status, setStatus] = useState('disconnected');
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState(null);
+  const [blockedDownload, setBlockedDownload] = useState(null);
   const wsRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -51,15 +52,47 @@ export function useSandbox() {
           setStatus('analyzing');
           break;
 
+        case 'analysis_progress':
+          // 분석 진행 상태 업데이트
+          console.log('[분석 진행]', msg.stage, msg.message);
+          break;
+
         case 'analysis_complete':
-          // 분석 완료 - 결과 저장
-          setAnalysis(msg.result);
+          // 분석 완료 - 결과 저장 (msg에서 직접 추출)
+          setAnalysis({
+            score: msg.riskScore,
+            riskLevel: msg.riskLevel,
+            summary: msg.summary,
+            threats: msg.findings,
+            codeAnalysis: msg.codeAnalysis,
+            visualAnalysis: msg.visualAnalysis,
+            recommendations: msg.recommendations,
+            confidence: msg.confidence
+          });
           setStatus('completed');
+          break;
+
+        case 'analysis_error':
+          console.error('[분석 오류]', msg.error);
           break;
 
         case 'error':
           setError(msg.message);
           setStatus('error');
+          break;
+
+        case 'download_blocked':
+          // 다운로드 차단 알림
+          setBlockedDownload({
+            filename: msg.filename,
+            fileSize: msg.fileSizeFormatted,
+            contentType: msg.contentType,
+            riskScore: msg.riskScore,
+            riskLevel: msg.riskLevel,
+            threats: msg.threats || [],
+            message: msg.message,
+            timestamp: msg.timestamp,
+          });
           break;
 
         default:
@@ -97,7 +130,7 @@ export function useSandbox() {
   const sendMouseMove = useCallback((x, y) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
-        type: 'mouse_move',
+        type: 'mousemove',
         x: Math.round(x),
         y: Math.round(y)
       }));
@@ -120,7 +153,7 @@ export function useSandbox() {
   const sendKeyDown = useCallback((key) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
-        type: 'key_down',
+        type: 'keydown',
         key
       }));
     }
@@ -137,6 +170,27 @@ export function useSandbox() {
     }
   }, []);
 
+  // 뒤로가기
+  const sendGoBack = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'goBack' }));
+    }
+  }, []);
+
+  // 앞으로가기
+  const sendGoForward = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'goForward' }));
+    }
+  }, []);
+
+  // 새로고침
+  const sendReload = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'reload' }));
+    }
+  }, []);
+
   // 연결 종료
   const disconnect = useCallback(() => {
     if (wsRef.current) {
@@ -146,6 +200,12 @@ export function useSandbox() {
     setStatus('disconnected');
     setAnalysis(null);
     setError(null);
+    setBlockedDownload(null);
+  }, []);
+
+  // 다운로드 알림 닫기
+  const dismissDownloadAlert = useCallback(() => {
+    setBlockedDownload(null);
   }, []);
 
   // 컴포넌트 언마운트 시 연결 종료
@@ -161,12 +221,17 @@ export function useSandbox() {
     status,
     analysis,
     error,
+    blockedDownload,
     canvasRef,
     connect,
     disconnect,
+    dismissDownloadAlert,
     sendMouseMove,
     sendClick,
     sendKeyDown,
-    sendScroll
+    sendScroll,
+    sendGoBack,
+    sendGoForward,
+    sendReload
   };
 }

@@ -1,154 +1,120 @@
-/* Safe-Link Sandbox 스타일 */
+/* Safe-Link Sandbox - 반응형 CSS */
 
-/* 전역 변수 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 :root {
   --color-primary: #4CAF50;
   --color-secondary: #2196F3;
   --color-warning: #FFC107;
   --color-danger: #F44336;
-  --color-bg: #1a1a2e;
-  --color-surface: #16213e;
+  --color-bg: #0a0a0a;
+  --color-surface: #1a1a2e;
   --color-text: #eaeaea;
   --color-text-muted: #888;
   --border-radius: 8px;
 }
 
-/* 앱 컨테이너 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg);
-  color: var(--color-text);
 }
 
-/* 헤더 */
+/* ===== Header ===== */
 .app-header {
-  padding: 2rem;
   text-align: center;
-  background-color: var(--color-surface);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-bottom: 1px solid #333;
 }
 
 .app-header h1 {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
   color: var(--color-primary);
 }
 
 .app-header .subtitle {
-  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
-  font-size: 1rem;
 }
 
-/* 메인 콘텐츠 */
+/* ===== Main ===== */
 .app-main {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
-  box-sizing: border-box;
 }
 
-/* URL 입력 섹션 */
-.input-section {
-  margin-bottom: 2rem;
+/* ===== Control Section ===== */
+.control-section {
+  margin-bottom: 1rem;
 }
 
-.url-input-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-width: 600px;
-  margin: 0 auto;
+.url-row {
+  margin-bottom: 0.75rem;
 }
 
-.input-wrapper {
+.nav-row {
   display: flex;
   align-items: center;
-  background-color: var(--color-surface);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-btn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: #fff;
   border-radius: var(--border-radius);
-  padding: 0.5rem 1rem;
-  transition: border-color 0.2s;
-}
-
-.input-wrapper:focus-within {
-  border-color: var(--color-primary);
-}
-
-.input-icon {
-  font-size: 1.2rem;
-  margin-right: 0.5rem;
-}
-
-.url-input-form input {
-  flex: 1;
-  background: none;
-  border: none;
-  color: var(--color-text);
-  font-size: 1rem;
-  padding: 0.5rem 0;
-  outline: none;
-}
-
-.url-input-form input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.url-input-form input.invalid {
-  color: var(--color-danger);
-}
-
-.error-message {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-  margin-left: 2.5rem;
-}
-
-.submit-button {
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: var(--border-radius);
+  font-size: 1.25rem;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.submit-button:hover:not(:disabled) {
-  background-color: #45a049;
-  transform: translateY(-1px);
-}
-
-.submit-button:disabled {
-  background-color: var(--color-text-muted);
-  cursor: not-allowed;
-}
-
-/* 상태 바 */
-.status-bar {
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background-color: var(--color-surface);
-  border-radius: var(--border-radius);
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-.status-indicator {
-  width: 12px;
-  height: 12px;
+.nav-btn:hover:not(:disabled) {
+  background: #333;
+  border-color: #666;
+}
+
+.nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
@@ -159,221 +125,515 @@
 }
 
 .status-text {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
-.disconnect-button {
-  margin-left: auto;
-  background-color: var(--color-danger);
-  color: white;
-  border: none;
+.disconnect-btn {
   padding: 0.5rem 1rem;
-  font-size: 0.85rem;
+  background: var(--color-danger);
+  border: none;
   border-radius: var(--border-radius);
+  color: #fff;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
-.disconnect-button:hover {
-  background-color: #d32f2f;
+.disconnect-btn:hover {
+  background: #e74c3c;
 }
 
-/* 에러 배너 */
+/* ===== Error Banner ===== */
 .error-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgba(244, 67, 54, 0.15);
+  padding: 0.75rem 1rem;
+  background: rgba(244, 67, 54, 0.15);
   border: 1px solid var(--color-danger);
   border-radius: var(--border-radius);
-  padding: 1rem;
   margin-bottom: 1rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.error-banner span {
-  color: var(--color-danger);
 }
 
 .error-banner button {
-  background: none;
+  padding: 0.25rem 0.75rem;
+  background: transparent;
   border: 1px solid var(--color-danger);
   color: var(--color-danger);
-  padding: 0.25rem 0.75rem;
   border-radius: 4px;
   cursor: pointer;
 }
 
-/* Canvas 뷰어 섹션 */
-.viewer-section {
+/* ===== Download Blocked Banner ===== */
+.download-blocked-banner {
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  border: 2px solid;
+  margin-bottom: 1rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.download-blocked-banner.download-danger {
+  background: linear-gradient(135deg, #2e1a1a 0%, #3e1e1e 100%);
+  border-color: var(--color-danger);
+}
+
+.download-blocked-banner.download-warning {
+  background: linear-gradient(135deg, #2e2a1a 0%, #3e3a1e 100%);
+  border-color: var(--color-warning);
+}
+
+.download-blocked-banner.download-safe {
+  background: linear-gradient(135deg, #1a2e1a 0%, #1e3e1e 100%);
+  border-color: var(--color-primary);
+}
+
+.download-blocked-header {
   display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.download-blocked-icon {
+  font-size: 1.25rem;
+}
+
+.download-blocked-title {
+  font-weight: 600;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.download-blocked-close {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.download-blocked-close:hover {
+  color: var(--color-text);
+}
+
+.download-blocked-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.download-file-info {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.download-filename {
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  word-break: break-all;
+  margin-bottom: 0.5rem;
+}
+
+.download-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.download-risk {
+  display: flex;
+  align-items: center;
+}
+
+.download-risk-score {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.download-threats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.download-threats li {
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.download-threats li.threat-critical {
+  background: rgba(244, 67, 54, 0.2);
+  border-left: 3px solid var(--color-danger);
+}
+
+.download-threats li.threat-high {
+  background: rgba(255, 152, 0, 0.2);
+  border-left: 3px solid #FF9800;
+}
+
+.download-threats li.threat-medium {
+  background: rgba(255, 193, 7, 0.2);
+  border-left: 3px solid var(--color-warning);
+}
+
+.download-message {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+/* ===== Summary Bar ===== */
+.summary-bar-section {
+  margin-bottom: 1rem;
+}
+
+.summary-bar {
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius);
+  border: 1px solid #333;
+}
+
+.summary-bar.summary-loading {
+  background: linear-gradient(135deg, #1a1a2e 0%, #2a1a3e 100%);
+  border-color: #9C27B0;
+}
+
+.summary-bar.summary-safe {
+  background: linear-gradient(135deg, #1a2e1a 0%, #1e3e1e 100%);
+  border-color: var(--color-primary);
+}
+
+.summary-bar.summary-warning {
+  background: linear-gradient(135deg, #2e2a1a 0%, #3e3a1e 100%);
+  border-color: var(--color-warning);
+}
+
+.summary-bar.summary-danger {
+  background: linear-gradient(135deg, #2e1a1a 0%, #3e1e1e 100%);
+  border-color: var(--color-danger);
+}
+
+.summary-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.loading-spinner-small {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #9C27B0;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.summary-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.summary-score {
+  font-weight: bold;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.summary-text {
+  flex: 1;
+  color: #ccc;
+  font-size: 0.875rem;
+  min-width: 0;
+}
+
+.detail-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.detail-btn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: #888;
+}
+
+/* ===== Viewer Section ===== */
+.viewer-section {
+  margin-bottom: 1rem;
 }
 
 .sandbox-viewer {
   position: relative;
+  width: 100%;
+  background: #111;
+  border-radius: var(--border-radius);
+  overflow: hidden;
 }
 
 .sandbox-viewer canvas {
   display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .viewer-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.7);
+  background: rgba(0,0,0,0.7);
   color: var(--color-text-muted);
-  font-size: 1.1rem;
-  border-radius: var(--border-radius);
+  font-size: 1rem;
+  text-align: center;
+  padding: 1rem;
   pointer-events: none;
 }
 
-/* 분석 결과 섹션 */
-.analysis-section {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-  background-color: var(--color-surface);
-  border-radius: var(--border-radius);
+/* ===== Detail Section ===== */
+.detail-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #333;
 }
 
-.analysis-section h2 {
-  margin: 0 0 1.5rem;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
-.risk-badge {
-  display: inline-block;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 1.5rem;
-  width: 100%;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.analysis-details {
-  text-align: left;
-}
-
-.score-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: var(--border-radius);
-  margin-bottom: 1rem;
-}
-
-.score-item .label {
-  font-weight: 600;
-}
-
-.score-item .value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--color-primary);
-}
-
-.threats-list {
-  margin-bottom: 1.5rem;
-}
-
-.threats-list h3 {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
-  color: var(--color-danger);
-}
-
-.threats-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.threat-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.75rem;
-  background-color: rgba(244, 67, 54, 0.1);
-  border-left: 3px solid var(--color-danger);
-  margin-bottom: 0.5rem;
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-}
-
-.threat-type {
-  font-weight: 600;
-  color: var(--color-danger);
-  text-transform: uppercase;
-  font-size: 0.85rem;
-}
-
-.threat-desc {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-
-.recommendation {
-  padding: 1rem;
-  background-color: rgba(76, 175, 80, 0.1);
-  border-left: 3px solid var(--color-primary);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-}
-
-.recommendation h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-  color: var(--color-primary);
-}
-
-.recommendation p {
-  margin: 0;
-  color: var(--color-text);
-  line-height: 1.5;
-}
-
-/* 푸터 */
+/* ===== Footer ===== */
 .app-footer {
-  padding: 1.5rem;
   text-align: center;
-  background-color: var(--color-surface);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.app-footer p {
-  margin: 0;
+  padding: 1rem;
   color: var(--color-text-muted);
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  border-top: 1px solid #222;
+  background: var(--color-surface);
 }
 
-/* 반응형 */
+/* ===== UrlInput Component ===== */
+.url-input-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #1a1a1a;
+  border: 2px solid #444;
+  border-radius: var(--border-radius);
+  padding: 0 1rem;
+  transition: border-color 0.2s;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--color-primary);
+}
+
+.input-icon {
+  font-size: 1.1rem;
+  margin-right: 0.5rem;
+}
+
+.url-input-form input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 1rem;
+  padding: 0.75rem 0;
+  outline: none;
+}
+
+.url-input-form input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.submit-button {
+  padding: 0.75rem 1.5rem;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--border-radius);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #66BB6A;
+}
+
+.submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  margin-left: 2.5rem;
+}
+
+/* ===== Mobile Responsive ===== */
 @media (max-width: 768px) {
+  .app-header {
+    padding: 0.75rem;
+  }
+
   .app-header h1 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+  }
+
+  .app-header .subtitle {
+    font-size: 0.75rem;
+  }
+
+  .app-main {
+    padding: 0.75rem;
+  }
+
+  .nav-row {
+    gap: 0.5rem;
+  }
+
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .status-info {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+
+  .disconnect-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .summary-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .summary-text {
+    width: 100%;
+  }
+
+  .detail-btn {
+    width: 100%;
+    text-align: center;
   }
 
   .sandbox-viewer canvas {
-    width: 100%;
-    height: auto;
+    max-height: 50vh;
   }
 
-  .analysis-section {
-    padding: 1rem;
+  .url-input-form {
+    flex-direction: column;
+  }
+
+  .input-wrapper {
+    padding: 0 0.75rem;
+  }
+
+  .url-input-form input {
+    padding: 0.6rem 0;
+    font-size: 0.9rem;
+  }
+
+  .submit-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0.5rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .app-main {
+    padding: 0.5rem;
+  }
+
+  .nav-buttons {
+    gap: 0.25rem;
+  }
+
+  .nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .summary-bar {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .summary-score {
+    font-size: 0.9rem;
+  }
+
+  .sandbox-viewer canvas {
+    max-height: 40vh;
+  }
+
+  .url-input-form input {
+    font-size: 0.85rem;
+  }
+
+  .submit-button {
+    font-size: 0.85rem;
   }
 }

@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { useSandbox } from './hooks/useSandbox';
 import { UrlInput } from './components/UrlInput';
 import { SandboxViewer } from './components/SandboxViewer';
@@ -6,135 +7,246 @@ import './App.css';
 
 /**
  * Safe-Link Sandbox 메인 앱
- * - URL 입력 및 샌드박스 세션 관리
- * - 실시간 브라우저 뷰어
- * - 위험도 분석 패널 표시
+ * 레이아웃: URL 입력 → 요약 바 → 샌드박스 → 상세 분석
  */
 function App() {
   const {
     status,
     analysis,
     error,
+    blockedDownload,
     canvasRef,
     connect,
     disconnect,
+    dismissDownloadAlert,
     sendMouseMove,
     sendClick,
     sendKeyDown,
-    sendScroll
+    sendScroll,
+    sendGoBack,
+    sendGoForward,
+    sendReload
   } = useSandbox();
 
+  const detailRef = useRef(null);
+  const [showDetail, setShowDetail] = useState(false);
+
+  // 상세 보기 클릭 시 스크롤
+  const scrollToDetail = () => {
+    setShowDetail(true);
+    setTimeout(() => {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   // 상태별 메시지
-  const getStatusMessage = () => {
+  const getStatusInfo = () => {
     switch (status) {
       case 'disconnected':
-        return { text: '대기 중', color: '#888' };
+        return { text: '대기 중', color: '#888', icon: '⏸️' };
       case 'connecting':
-        return { text: '연결 중...', color: '#FFC107' };
+        return { text: '연결 중...', color: '#FFC107', icon: '🔄' };
       case 'connected':
-        return { text: '연결됨', color: '#4CAF50' };
+        return { text: '연결됨', color: '#4CAF50', icon: '🟢' };
       case 'browsing':
-        return { text: '브라우징 중...', color: '#2196F3' };
+        return { text: '브라우징 중...', color: '#2196F3', icon: '🌐' };
       case 'analyzing':
-        return { text: 'AI 분석 중...', color: '#9C27B0' };
+        return { text: 'AI 분석 중...', color: '#9C27B0', icon: '🔄' };
       case 'completed':
-        return { text: '분석 완료', color: '#4CAF50' };
+        return { text: '분석 완료', color: '#4CAF50', icon: '✅' };
       case 'error':
-        return { text: '오류 발생', color: '#F44336' };
+        return { text: '오류 발생', color: '#F44336', icon: '❌' };
       default:
-        return { text: status, color: '#888' };
+        return { text: status, color: '#888', icon: '⏸️' };
     }
   };
 
-  // RiskPanel용 분석 데이터 변환
-  const getRiskPanelData = () => {
-    if (!analysis && status !== 'analyzing') return null;
-
-    // 분석 중일 때 로딩 상태
+  // 요약 바 데이터
+  const getSummaryData = () => {
     if (status === 'analyzing') {
-      return { status: 'loading' };
+      return { type: 'loading', text: 'AI가 페이지를 분석하고 있습니다...' };
     }
 
-    // 에러 상태
-    if (status === 'error') {
-      return {
-        status: 'error',
-        summary: error || '분석 중 오류가 발생했습니다.'
-      };
-    }
-
-    // 분석 완료
     if (analysis) {
+      const level = analysis.riskLevel || 'safe';
+      const score = analysis.score || 0;
+      const summary = analysis.summary || '분석이 완료되었습니다.';
+
       return {
-        status: 'complete',
-        riskScore: analysis.score || 0,
-        riskLevel: analysis.riskLevel || 'safe',
-        summary: analysis.summary || '',
-        findings: analysis.threats?.map(t => ({
-          category: t.category || t.type || '기타',
-          severity: t.severity || 'medium',
-          description: t.description
-        })) || [],
-        codeAnalysis: analysis.codeAnalysis || {
-          hiddenFields: analysis.hiddenFields || 0,
-          externalScripts: analysis.externalScripts || 0,
-          suspiciousPatterns: analysis.suspiciousPatterns || []
-        },
-        recommendations: analysis.recommendations ||
-          (analysis.recommendation ? [analysis.recommendation] : []),
-        confidence: analysis.confidence || 85
+        type: 'complete',
+        level,
+        score,
+        text: summary.length > 60 ? summary.substring(0, 60) + '...' : summary
       };
     }
 
     return null;
   };
 
-  const statusInfo = getStatusMessage();
-  const isDisabled = status === 'connecting' || status === 'browsing' || status === 'analyzing';
+  // RiskPanel용 분석 데이터 변환
+  const getRiskPanelData = () => {
+    if (!analysis) return null;
+
+    return {
+      status: 'complete',
+      riskScore: analysis.score || 0,
+      riskLevel: analysis.riskLevel || 'safe',
+      summary: analysis.summary || '',
+      findings: analysis.threats?.map(t => ({
+        category: t.category || t.type || '기타',
+        severity: t.severity || 'medium',
+        description: t.description
+      })) || [],
+      codeAnalysis: analysis.codeAnalysis || {
+        hiddenFields: 0,
+        externalScripts: 0,
+        suspiciousPatterns: []
+      },
+      recommendations: analysis.recommendations || [],
+      confidence: analysis.confidence || 85
+    };
+  };
+
+  const statusInfo = getStatusInfo();
+  const summaryData = getSummaryData();
   const riskPanelData = getRiskPanelData();
+  const isActive = status !== 'disconnected' && status !== 'error';
 
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Safe-Link Sandbox</h1>
+        <h1>🔒 Safe-Link Sandbox</h1>
         <p className="subtitle">의심스러운 링크를 안전하게 검사하세요</p>
       </header>
 
       <main className="app-main">
-        {/* URL 입력 섹션 */}
-        <section className="input-section">
-          <UrlInput onSubmit={connect} disabled={isDisabled} />
-
-          <div className="status-bar">
-            <span
-              className="status-indicator"
-              style={{ backgroundColor: statusInfo.color }}
+        {/* URL 입력 + 네비게이션 */}
+        <section className="control-section">
+          <div className="url-row">
+            <UrlInput
+              onSubmit={connect}
+              disabled={status === 'connecting' || status === 'browsing'}
             />
-            <span className="status-text">{statusInfo.text}</span>
+          </div>
 
-            {(status !== 'disconnected' && status !== 'connecting') && (
+          <div className="nav-row">
+            <div className="nav-buttons">
               <button
-                className="disconnect-button"
-                onClick={disconnect}
+                className="nav-btn"
+                onClick={sendGoBack}
+                disabled={!isActive}
+                title="뒤로가기"
               >
+                ←
+              </button>
+              <button
+                className="nav-btn"
+                onClick={sendGoForward}
+                disabled={!isActive}
+                title="앞으로가기"
+              >
+                →
+              </button>
+              <button
+                className="nav-btn"
+                onClick={sendReload}
+                disabled={!isActive}
+                title="새로고침"
+              >
+                🔄
+              </button>
+            </div>
+
+            <div className="status-info">
+              <span
+                className="status-dot"
+                style={{ backgroundColor: statusInfo.color }}
+              />
+              <span className="status-text">{statusInfo.text}</span>
+            </div>
+
+            {isActive && (
+              <button className="disconnect-btn" onClick={disconnect}>
                 세션 종료
               </button>
             )}
           </div>
         </section>
 
-        {/* 에러 메시지 (RiskPanel 없을 때만) */}
-        {error && !riskPanelData && (
+        {/* 에러 배너 */}
+        {error && (
           <div className="error-banner">
-            <span>{error}</span>
-            <button onClick={() => disconnect()}>닫기</button>
+            <span>❌ {error}</span>
+            <button onClick={disconnect}>닫기</button>
           </div>
         )}
 
-        {/* 위험도 분석 패널 (상단) */}
-        <RiskPanel analysis={riskPanelData} />
+        {/* 다운로드 차단 알림 */}
+        {blockedDownload && (
+          <div className={`download-blocked-banner download-${blockedDownload.riskLevel}`}>
+            <div className="download-blocked-header">
+              <span className="download-blocked-icon">🚫</span>
+              <span className="download-blocked-title">다운로드 차단됨</span>
+              <button className="download-blocked-close" onClick={dismissDownloadAlert}>✕</button>
+            </div>
+            <div className="download-blocked-content">
+              <div className="download-file-info">
+                <div className="download-filename">{blockedDownload.filename}</div>
+                <div className="download-meta">
+                  <span>크기: {blockedDownload.fileSize}</span>
+                  <span>타입: {blockedDownload.contentType}</span>
+                </div>
+              </div>
+              <div className="download-risk">
+                <span className="download-risk-score">
+                  {blockedDownload.riskLevel === 'danger' && '🚨'}
+                  {blockedDownload.riskLevel === 'warning' && '⚠️'}
+                  {blockedDownload.riskLevel === 'safe' && '⚡'}
+                  {' '}위험도 {blockedDownload.riskScore}점
+                </span>
+              </div>
+              {blockedDownload.threats && blockedDownload.threats.length > 0 && (
+                <ul className="download-threats">
+                  {blockedDownload.threats.map((threat, idx) => (
+                    <li key={idx} className={`threat-${threat.severity}`}>
+                      <strong>{threat.type}:</strong> {threat.description}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="download-message">{blockedDownload.message}</div>
+            </div>
+          </div>
+        )}
 
-        {/* Canvas 뷰어 섹션 (하단) */}
+        {/* 요약 바 (샌드박스 위) */}
+        {summaryData && (
+          <section className="summary-bar-section">
+            <div className={`summary-bar summary-${summaryData.type === 'loading' ? 'loading' : summaryData.level}`}>
+              {summaryData.type === 'loading' ? (
+                <div className="summary-loading">
+                  <span className="loading-spinner-small"></span>
+                  <span>{summaryData.text}</span>
+                </div>
+              ) : (
+                <div className="summary-content">
+                  <span className="summary-score">
+                    {summaryData.level === 'safe' && '✅'}
+                    {summaryData.level === 'warning' && '⚠️'}
+                    {summaryData.level === 'danger' && '🚨'}
+                    {' '}위험도 {summaryData.score}점
+                  </span>
+                  <span className="summary-text">{summaryData.text}</span>
+                  <button className="detail-btn" onClick={scrollToDetail}>
+                    ▼ 상세
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* 샌드박스 뷰어 */}
         <section className="viewer-section">
           <SandboxViewer
             canvasRef={canvasRef}
@@ -142,9 +254,16 @@ function App() {
             onClick={sendClick}
             onScroll={sendScroll}
             onKeyDown={sendKeyDown}
-            disabled={status === 'disconnected' || status === 'error'}
+            disabled={!isActive}
           />
         </section>
+
+        {/* 상세 분석 결과 (하단) */}
+        {showDetail && riskPanelData && (
+          <section className="detail-section" ref={detailRef}>
+            <RiskPanel analysis={riskPanelData} />
+          </section>
+        )}
       </main>
 
       <footer className="app-footer">

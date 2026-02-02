@@ -13,7 +13,7 @@ export function SandboxViewer({
   onKeyDown,
   disabled = false
 }) {
-  // 키보드 이벤트 리스너 등록
+  // 키보드 및 휠 이벤트 리스너 등록
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || disabled) return;
@@ -30,12 +30,20 @@ export function SandboxViewer({
       onKeyDown(key);
     };
 
+    // passive: false로 설정하여 preventDefault 허용
+    const handleWheel = (e) => {
+      e.preventDefault();
+      onScroll(e.deltaX, e.deltaY);
+    };
+
     canvas.addEventListener('keydown', handleKeyDown);
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       canvas.removeEventListener('keydown', handleKeyDown);
+      canvas.removeEventListener('wheel', handleWheel);
     };
-  }, [canvasRef, onKeyDown, disabled]);
+  }, [canvasRef, onKeyDown, onScroll, disabled]);
 
   // 마우스 이동 핸들러 (throttle 적용)
   const handleMouseMove = useCallback((e) => {
@@ -66,13 +74,6 @@ export function SandboxViewer({
     onClick(x, y, 'right');
   }, [onClick, disabled]);
 
-  // 스크롤 핸들러
-  const handleWheel = useCallback((e) => {
-    if (disabled) return;
-    e.preventDefault();
-    onScroll(e.deltaX, e.deltaY);
-  }, [onScroll, disabled]);
-
   return (
     <div className="sandbox-viewer">
       <canvas
@@ -82,7 +83,6 @@ export function SandboxViewer({
         onMouseMove={handleMouseMove}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
-        onWheel={handleWheel}
         tabIndex={0}
         style={{
           border: disabled ? '2px solid #ccc' : '2px solid #4CAF50',

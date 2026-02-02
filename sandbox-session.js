@@ -22,6 +22,22 @@ const MAX_REDIRECTS = 5;
 const DEFAULT_VIEWPORT_WIDTH = 1280;
 const DEFAULT_VIEWPORT_HEIGHT = 720;
 
+// 위험한 파일 확장자
+const DANGEROUS_EXTENSIONS = [
+  '.exe', '.msi', '.bat', '.cmd', '.com', '.scr', '.pif',  // Windows 실행 파일
+  '.app', '.dmg', '.pkg',                                   // macOS 실행 파일
+  '.sh', '.bash', '.zsh',                                   // 쉘 스크립트
+  '.jar', '.jnlp',                                          // Java
+  '.ps1', '.psm1', '.psd1',                                 // PowerShell
+  '.vbs', '.vbe', '.js', '.jse', '.ws', '.wsf', '.wsc',    // 스크립트
+  '.hta', '.cpl', '.msc',                                   // Windows 컴포넌트
+  '.dll', '.sys', '.drv',                                   // 시스템 파일
+  '.iso', '.img',                                           // 디스크 이미지
+];
+
+// 이중 확장자 패턴 (위장 파일)
+const DOUBLE_EXTENSION_PATTERN = /\.(pdf|doc|docx|xls|xlsx|jpg|png|txt)\.(exe|scr|bat|cmd|js|vbs)$/i;
+
 // 차단할 IP 패턴 (내부 네트워크)
 const BLOCKED_PATTERNS = [
   /^127\./,
@@ -264,6 +280,9 @@ export class SandboxSession {
       // 페이지 이동 감지 설정
       this.setupNavigationDetection();
 
+      // 다운로드 감지 및 차단 설정
+      this.setupDownloadBlocking();
+
       // 리다이렉트 추적
       this.page.on('response', (response) => {
         const status = response.status();
@@ -343,6 +362,247 @@ export class SandboxSession {
     if (this.onNavigation) {
       this.onNavigation(this, this.currentUrl);
     }
+  }
+
+  /**
+   * 다운로드 감지 및 차단 설정
+   */
+  setupDownloadBlocking() {
+    if (!this.page) return;
+
+    // CDP를 통한 다운로드 차단
+    this.page.client().send('Browser.setDownloadBehavior', {
+      behavior: 'deny',  // 모든 다운로드 차단
+    }).catch(() => {
+      // 구버전 Puppeteer에서는 무시
+    });
+
+    // 다운로드 시도 감지 (response 헤더 분석)
+    this.page.on('response', async (response) => {
+      const headers = response.headers();
+      const contentDisposition = headers['content-disposition'] || '';
+      const contentType = headers['content-type'] || '';
+      const url = response.url();
+
+      // 다운로드 시도 감지
+      if (contentDisposition.includes('attachment') ||
+          this.isDownloadableContentType(contentType)) {
+
+        const fileInfo = this.analyzeDownload(url, contentDisposition, contentType, headers);
+
+        log(`[Session ${this.id}] 🚨 다운로드 차단: ${fileInfo.filename}`, 'WARN');
+
+        // 프론트엔드에 알림 전송
+        this.send({
+          type: 'download_blocked',
+          ...fileInfo,
+          timestamp: Date.now(),
+        });
+      }
+    });
+
+    // 링크 클릭으로 인한 다운로드 감지 (download 속성)
+    this.page.on('request', (request) => {
+      const url = request.url();
+      const resourceType = request.resourceType();
+
+      // 파일 다운로드 URL 패턴 감지
+      if (this.isDownloadUrl(url)) {
+        const fileInfo = this.analyzeDownloadUrl(url);
+
+        log(`[Session ${this.id}] 🚨 다운로드 URL 감지: ${url}`, 'WARN');
+
+        this.send({
+          type: 'download_blocked',
+          ...fileInfo,
+          timestamp: Date.now(),
+        });
+      }
+    });
+
+    log(`[Session ${this.id}] 다운로드 차단 설정 완료`);
+  }
+
+  /**
+   * 다운로드 가능한 Content-Type 확인
+   * @param {string} contentType
+   * @returns {boolean}
+   */
+  isDownloadableContentType(contentType) {
+    const downloadableTypes = [
+      'application/octet-stream',
+      'application/x-msdownload',
+      'application/x-executable',
+      'application/x-msdos-program',
+      'application/zip',
+      'application/x-rar-compressed',
+      'application/x-7z-compressed',
+      'application/x-tar',
+      'application/gzip',
+    ];
+    return downloadableTypes.some(type => contentType.includes(type));
+  }
+
+  /**
+   * 다운로드 URL 패턴 확인
+   * @param {string} url
+   * @returns {boolean}
+   */
+  isDownloadUrl(url) {
+    const lowerUrl = url.toLowerCase();
+    return DANGEROUS_EXTENSIONS.some(ext => lowerUrl.endsWith(ext));
+  }
+
+  /**
+   * 다운로드 정보 분석
+   * @param {string} url
+   * @param {string} contentDisposition
+   * @param {string} contentType
+   * @param {object} headers
+   * @returns {object}
+   */
+  analyzeDownload(url, contentDisposition, contentType, headers) {
+    // 파일명 추출
+    let filename = 'unknown';
+    const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    if (filenameMatch) {
+      filename = filenameMatch[1].replace(/['"]/g, '');
+    } else {
+      // URL에서 파일명 추출
+      const urlParts = url.split('/');
+      filename = urlParts[urlParts.length - 1].split('?')[0] || 'unknown';
+    }
+
+    // 파일 크기
+    const contentLength = headers['content-length'];
+    const fileSize = contentLength ? parseInt(contentLength, 10) : null;
+
+    // 위험도 분석
+    const riskAnalysis = this.analyzeFileRisk(filename, contentType);
+
+    return {
+      filename,
+      fileSize,
+      fileSizeFormatted: fileSize ? this.formatFileSize(fileSize) : '알 수 없음',
+      contentType,
+      sourceUrl: url,
+      ...riskAnalysis,
+    };
+  }
+
+  /**
+   * URL에서 다운로드 정보 분석
+   * @param {string} url
+   * @returns {object}
+   */
+  analyzeDownloadUrl(url) {
+    const urlParts = url.split('/');
+    const filename = decodeURIComponent(urlParts[urlParts.length - 1].split('?')[0]) || 'unknown';
+
+    const riskAnalysis = this.analyzeFileRisk(filename, 'unknown');
+
+    return {
+      filename,
+      fileSize: null,
+      fileSizeFormatted: '알 수 없음',
+      contentType: 'unknown',
+      sourceUrl: url,
+      ...riskAnalysis,
+    };
+  }
+
+  /**
+   * 파일 위험도 분석
+   * @param {string} filename
+   * @param {string} contentType
+   * @returns {object}
+   */
+  analyzeFileRisk(filename, contentType) {
+    const threats = [];
+    let riskScore = 30; // 기본 위험도 (다운로드 시도 자체가 의심)
+
+    const lowerFilename = filename.toLowerCase();
+    const extension = '.' + lowerFilename.split('.').pop();
+
+    // 이중 확장자 검사 (가장 위험)
+    if (DOUBLE_EXTENSION_PATTERN.test(lowerFilename)) {
+      threats.push({
+        type: '이중 확장자',
+        severity: 'critical',
+        description: `위장된 파일입니다. 실제 확장자: ${extension}`,
+      });
+      riskScore += 50;
+    }
+
+    // 위험한 확장자 검사
+    if (DANGEROUS_EXTENSIONS.includes(extension)) {
+      threats.push({
+        type: '실행 파일',
+        severity: 'high',
+        description: `실행 가능한 파일 형식입니다. (${extension})`,
+      });
+      riskScore += 30;
+    }
+
+    // Content-Type 불일치 검사
+    if (contentType !== 'unknown') {
+      const expectedType = this.getExpectedContentType(extension);
+      if (expectedType && !contentType.includes(expectedType)) {
+        threats.push({
+          type: 'MIME 타입 불일치',
+          severity: 'medium',
+          description: `파일 확장자와 Content-Type이 일치하지 않습니다.`,
+        });
+        riskScore += 20;
+      }
+    }
+
+    // 위험도 레벨 결정
+    let riskLevel = 'safe';
+    if (riskScore >= 70) riskLevel = 'danger';
+    else if (riskScore >= 40) riskLevel = 'warning';
+
+    return {
+      riskScore: Math.min(riskScore, 100),
+      riskLevel,
+      threats,
+      blocked: true,  // 항상 차단
+      message: '🚫 보안을 위해 다운로드가 차단되었습니다.',
+    };
+  }
+
+  /**
+   * 확장자별 예상 Content-Type
+   * @param {string} extension
+   * @returns {string|null}
+   */
+  getExpectedContentType(extension) {
+    const typeMap = {
+      '.pdf': 'application/pdf',
+      '.doc': 'application/msword',
+      '.docx': 'application/vnd.openxmlformats',
+      '.xls': 'application/vnd.ms-excel',
+      '.xlsx': 'application/vnd.openxmlformats',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.txt': 'text/plain',
+      '.zip': 'application/zip',
+    };
+    return typeMap[extension] || null;
+  }
+
+  /**
+   * 파일 크기 포맷팅
+   * @param {number} bytes
+   * @returns {string}
+   */
+  formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
   }
 
   // ============================================
@@ -632,6 +892,57 @@ export class SandboxSession {
         height: this.viewportHeight,
       },
     };
+  }
+
+  /**
+   * 뒤로가기
+   * @returns {Promise<boolean>} 성공 여부
+   */
+  async goBack() {
+    if (!this.page || !this.isActive) return false;
+
+    try {
+      await this.page.goBack({ waitUntil: 'networkidle2', timeout: 10000 });
+      log(`[Session ${this.id}] 뒤로가기 실행`);
+      return true;
+    } catch (error) {
+      log(`[Session ${this.id}] 뒤로가기 오류: ${error.message}`, 'ERROR');
+      return false;
+    }
+  }
+
+  /**
+   * 앞으로가기
+   * @returns {Promise<boolean>} 성공 여부
+   */
+  async goForward() {
+    if (!this.page || !this.isActive) return false;
+
+    try {
+      await this.page.goForward({ waitUntil: 'networkidle2', timeout: 10000 });
+      log(`[Session ${this.id}] 앞으로가기 실행`);
+      return true;
+    } catch (error) {
+      log(`[Session ${this.id}] 앞으로가기 오류: ${error.message}`, 'ERROR');
+      return false;
+    }
+  }
+
+  /**
+   * 새로고침
+   * @returns {Promise<boolean>} 성공 여부
+   */
+  async reload() {
+    if (!this.page || !this.isActive) return false;
+
+    try {
+      await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
+      log(`[Session ${this.id}] 새로고침 실행`);
+      return true;
+    } catch (error) {
+      log(`[Session ${this.id}] 새로고침 오류: ${error.message}`, 'ERROR');
+      return false;
+    }
   }
 
   /**
