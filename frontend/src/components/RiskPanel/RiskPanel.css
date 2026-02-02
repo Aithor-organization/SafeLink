@@ -1,0 +1,537 @@
+/* RiskPanel 스타일 */
+
+/* 패널 기본 */
+.risk-panel {
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* 위험도 레벨별 스타일 */
+.risk-panel-safe {
+  border-color: rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.1);
+}
+
+.risk-panel-warning {
+  border-color: rgba(255, 193, 7, 0.3);
+  box-shadow: 0 4px 20px rgba(255, 193, 7, 0.1);
+}
+
+.risk-panel-danger {
+  border-color: rgba(244, 67, 54, 0.3);
+  box-shadow: 0 4px 20px rgba(244, 67, 54, 0.1);
+}
+
+/* 패널 헤더 */
+.risk-panel-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.risk-panel-safe .risk-panel-header {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+}
+
+.risk-panel-warning .risk-panel-header {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+}
+
+.risk-panel-danger .risk-panel-header {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.15), rgba(244, 67, 54, 0.05));
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.panel-icon {
+  font-size: 1.5rem;
+}
+
+/* 패널 콘텐츠 */
+.risk-panel-content {
+  padding: 1.5rem;
+}
+
+/* 구분선 */
+.panel-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  margin: 1.5rem 0;
+}
+
+/* ============================================
+   RiskSummary 스타일
+   ============================================ */
+
+.risk-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* 원형 점수 */
+.score-circle-container {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.score-circle {
+  width: 100%;
+  height: 100%;
+}
+
+.score-progress {
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+
+.score-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.score-number {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.score-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: -0.25rem;
+}
+
+/* 위험 레벨 배지 */
+.risk-level-badge {
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* 요약 텍스트 */
+.risk-summary-text {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+/* 신뢰도 바 */
+.confidence-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 0.5rem;
+}
+
+.confidence-label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.confidence-track {
+  flex: 1;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background-color: var(--color-secondary);
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+}
+
+.confidence-value {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  min-width: 35px;
+  text-align: right;
+}
+
+/* ============================================
+   CodeFindings 스타일
+   ============================================ */
+
+.code-findings,
+.visual-findings,
+.recommendations {
+  margin-bottom: 1.5rem;
+}
+
+.findings-title,
+.recommendations-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.findings-icon,
+.recommendations-icon {
+  font-size: 1.25rem;
+}
+
+.no-findings {
+  margin: 0;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: var(--border-radius);
+  color: var(--color-text-muted);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* 발견 항목 */
+.finding-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: var(--border-radius);
+  margin-bottom: 0.5rem;
+}
+
+.finding-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid var(--color-warning);
+}
+
+.finding-icon {
+  font-size: 1.2rem;
+}
+
+.finding-text {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.finding-text strong {
+  color: var(--color-warning);
+}
+
+/* 의심 패턴 */
+.suspicious-patterns {
+  margin-top: 1rem;
+}
+
+.patterns-subtitle {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.patterns-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pattern-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: var(--border-radius);
+}
+
+.pattern-high {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 3px solid var(--color-danger);
+}
+
+.pattern-medium {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid var(--color-warning);
+}
+
+.pattern-low {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid var(--color-primary);
+}
+
+.pattern-severity {
+  margin-right: 0.5rem;
+}
+
+.pattern-name {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.pattern-desc {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding-left: 1.5rem;
+}
+
+/* ============================================
+   VisualFindings 스타일
+   ============================================ */
+
+.finding-category {
+  margin-bottom: 1rem;
+}
+
+.category-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.category-icon {
+  font-size: 1.1rem;
+}
+
+.findings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.findings-list .finding-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.finding-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.severity-icon {
+  font-size: 1rem;
+}
+
+.severity-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.finding-description {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.severity-high {
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 3px solid var(--color-danger);
+}
+
+.severity-medium {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid var(--color-warning);
+}
+
+.severity-low {
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid var(--color-primary);
+}
+
+/* ============================================
+   Recommendations 스타일
+   ============================================ */
+
+.recommendations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.recommendation-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(33, 150, 243, 0.1);
+  border-radius: var(--border-radius);
+  margin-bottom: 0.5rem;
+  border-left: 3px solid var(--color-secondary);
+}
+
+.check-icon {
+  font-size: 1.1rem;
+  color: var(--color-secondary);
+}
+
+.recommendation-text {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+/* ============================================
+   로딩 상태 스타일
+   ============================================ */
+
+.risk-panel-loading {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--color-secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--color-text);
+}
+
+.loading-steps {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.loading-steps .step {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+}
+
+.loading-steps .step.active {
+  color: var(--color-secondary);
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+/* ============================================
+   에러 상태 스타일
+   ============================================ */
+
+.risk-panel-error {
+  padding: 3rem 2rem;
+  text-align: center;
+  border-color: rgba(244, 67, 54, 0.3);
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.error-icon {
+  font-size: 3rem;
+}
+
+.error-content h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-danger);
+}
+
+.error-content p {
+  margin: 0;
+  color: var(--color-text-muted);
+  max-width: 400px;
+}
+
+/* ============================================
+   반응형 스타일
+   ============================================ */
+
+@media (max-width: 768px) {
+  .risk-panel {
+    margin: 0 1rem 1.5rem;
+  }
+
+  .risk-panel-header {
+    padding: 1rem;
+  }
+
+  .risk-panel-content {
+    padding: 1rem;
+  }
+
+  .score-circle-container {
+    width: 120px;
+    height: 120px;
+  }
+
+  .score-number {
+    font-size: 2rem;
+  }
+
+  .confidence-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .confidence-label,
+  .confidence-value {
+    text-align: center;
+  }
+
+  .loading-steps {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}

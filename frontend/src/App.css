@@ -1,0 +1,379 @@
+/* Safe-Link Sandbox 스타일 */
+
+/* 전역 변수 */
+:root {
+  --color-primary: #4CAF50;
+  --color-secondary: #2196F3;
+  --color-warning: #FFC107;
+  --color-danger: #F44336;
+  --color-bg: #1a1a2e;
+  --color-surface: #16213e;
+  --color-text: #eaeaea;
+  --color-text-muted: #888;
+  --border-radius: 8px;
+}
+
+/* 앱 컨테이너 */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* 헤더 */
+.app-header {
+  padding: 2rem;
+  text-align: center;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.app-header .subtitle {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+/* 메인 콘텐츠 */
+.app-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* URL 입력 섹션 */
+.input-section {
+  margin-bottom: 2rem;
+}
+
+.url-input-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-surface);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 1rem;
+  transition: border-color 0.2s;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--color-primary);
+}
+
+.input-icon {
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+}
+
+.url-input-form input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 1rem;
+  padding: 0.5rem 0;
+  outline: none;
+}
+
+.url-input-form input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.url-input-form input.invalid {
+  color: var(--color-danger);
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  margin-left: 2.5rem;
+}
+
+.submit-button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+.submit-button:disabled {
+  background-color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* 상태 바 */
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-text {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.disconnect-button {
+  margin-left: auto;
+  background-color: var(--color-danger);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.disconnect-button:hover {
+  background-color: #d32f2f;
+}
+
+/* 에러 배너 */
+.error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: rgba(244, 67, 54, 0.15);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.error-banner span {
+  color: var(--color-danger);
+}
+
+.error-banner button {
+  background: none;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Canvas 뷰어 섹션 */
+.viewer-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.sandbox-viewer {
+  position: relative;
+}
+
+.sandbox-viewer canvas {
+  display: block;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.viewer-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  border-radius: var(--border-radius);
+  pointer-events: none;
+}
+
+/* 분석 결과 섹션 */
+.analysis-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius);
+}
+
+.analysis-section h2 {
+  margin: 0 0 1.5rem;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.risk-badge {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.analysis-details {
+  text-align: left;
+}
+
+.score-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius);
+  margin-bottom: 1rem;
+}
+
+.score-item .label {
+  font-weight: 600;
+}
+
+.score-item .value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.threats-list {
+  margin-bottom: 1.5rem;
+}
+
+.threats-list h3 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  color: var(--color-danger);
+}
+
+.threats-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.threat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-left: 3px solid var(--color-danger);
+  margin-bottom: 0.5rem;
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.threat-type {
+  font-weight: 600;
+  color: var(--color-danger);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.threat-desc {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.recommendation {
+  padding: 1rem;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.recommendation h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: var(--color-primary);
+}
+
+.recommendation p {
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* 푸터 */
+.app-footer {
+  padding: 1.5rem;
+  text-align: center;
+  background-color: var(--color-surface);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-footer p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .sandbox-viewer canvas {
+    width: 100%;
+    height: auto;
+  }
+
+  .analysis-section {
+    padding: 1rem;
+  }
+}

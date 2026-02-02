@@ -1,6 +1,6 @@
 # Safe-Link Sandbox
 
-URL 안전성 분석 샌드박스 API - AI 기반 피싱/스캠 탐지 시스템
+URL 안전성 분석 샌드박스 - AI 기반 피싱/스캠 탐지 + **실시간 브라우저 스트리밍**
 
 ## 개요
 
@@ -8,11 +8,11 @@ Safe-Link Sandbox는 의심스러운 URL을 안전한 서버 환경에서 분석
 
 ### 주요 기능
 
-- **샌드박스 분석**: Puppeteer 기반 격리된 환경에서 URL 렌더링
-- **위험도 점수화**: 0-100 점수로 위험 수준 평가
-- **스크린샷 캡처**: 페이지 미리보기 이미지 제공
-- **AI 분석**: Gemini 3 Flash 모델을 활용한 지능형 위협 탐지
-- **하이브리드 분석**: 휴리스틱 분석 + AI 분석 결합
+- **🖥️ Live Sandbox**: 실시간 브라우저 화면 스트리밍 (마우스/키보드 조작 가능)
+- **🤖 AI 멀티모달 분석**: 소스코드 + 스크린샷 동시 분석 (Gemini 3 Flash)
+- **⚡ 비동기 분석**: 즉시 접속, 백그라운드에서 AI 분석 후 결과 표시
+- **📊 위험도 점수화**: 0-100 점수로 위험 수준 평가
+- **🔒 완전 격리**: 악성 사이트가 사용자 PC에 접근 불가
 
 ## 설치
 
@@ -36,12 +36,52 @@ cp .env.example .env
 
 ## 실행
 
+### Live Sandbox (실시간 브라우저)
+
+```bash
+# 백엔드: Live Sandbox 서버
+npm run sandbox:dev
+
+# 프론트엔드: React UI
+cd frontend && npm run dev
+```
+
+브라우저에서 `http://localhost:5173` 접속
+
+### REST API 서버
+
 ```bash
 # 개발 모드 (자동 재시작)
 npm run dev
 
 # 프로덕션 모드
 npm start
+```
+
+## Live Sandbox 사용법
+
+1. 프론트엔드 접속 (`http://localhost:5173`)
+2. URL 입력 후 "접속" 클릭
+3. 실시간 브라우저 화면에서 마우스/키보드로 탐색
+4. 상단 위험도 패널에서 AI 분석 결과 확인
+
+### WebSocket 프로토콜
+
+```javascript
+// 연결
+const ws = new WebSocket('ws://localhost:4000/sandbox');
+
+// 세션 시작
+ws.send(JSON.stringify({ type: 'start', url: 'https://example.com' }));
+
+// 마우스 클릭
+ws.send(JSON.stringify({ type: 'click', x: 100, y: 200 }));
+
+// 서버 → 클라이언트: 프레임
+{ type: 'frame', data: 'base64-jpeg...' }
+
+// 서버 → 클라이언트: AI 분석 완료
+{ type: 'analysis_complete', riskScore: 65, riskLevel: 'warning', ... }
 ```
 
 ## API 엔드포인트
@@ -135,10 +175,33 @@ URL 전체 분석 (샌드박스 + AI)
 ## 기술 스택
 
 - **Runtime**: Node.js 20+
-- **Framework**: Express.js
-- **Browser**: Puppeteer
+- **Backend**: Express.js, WebSocket (ws)
+- **Browser**: Puppeteer (CDP Screencast)
+- **Frontend**: React, Canvas API
 - **AI**: OpenRouter API (Gemini 3 Flash)
-- **Security**: Helmet, Rate Limiting
+- **Security**: Helmet, Rate Limiting, URL 필터링
+
+## 프로젝트 구조
+
+```
+safe-link-sandbox/
+├── server.js              # REST API 서버
+├── sandbox-server.js      # Live Sandbox WebSocket 서버
+├── sandbox-session.js     # 세션 관리 클래스
+├── live-analyzer.js       # 실시간 AI 분석 모듈
+├── analyzer.js            # 휴리스틱 분석
+├── ai-analyzer.js         # AI 분석 (기본)
+│
+└── frontend/              # React 프론트엔드
+    └── src/
+        ├── App.jsx
+        ├── components/
+        │   ├── RiskPanel/     # 위험도 패널
+        │   ├── SandboxViewer.jsx  # Canvas 뷰어
+        │   └── UrlInput.jsx
+        └── hooks/
+            └── useSandbox.js  # WebSocket 훅
+```
 
 ## 라이선스
 
