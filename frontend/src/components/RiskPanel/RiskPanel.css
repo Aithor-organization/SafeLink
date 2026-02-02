@@ -177,6 +177,58 @@
 }
 
 /* ============================================
+   쉬운 설명 (비개발자용) 스타일
+   ============================================ */
+
+.simple-explanation {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: var(--border-radius);
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(33, 150, 243, 0.05));
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.simple-explanation-safe {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.simple-explanation-warning {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05));
+  border-color: rgba(255, 193, 7, 0.3);
+}
+
+.simple-explanation-danger {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.15), rgba(244, 67, 54, 0.05));
+  border-color: rgba(244, 67, 54, 0.3);
+}
+
+.simple-explanation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.simple-explanation-icon {
+  font-size: 1.25rem;
+}
+
+.simple-explanation-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.simple-explanation-text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--color-text);
+  word-break: keep-all;
+}
+
+/* ============================================
    CodeFindings 스타일
    ============================================ */
 

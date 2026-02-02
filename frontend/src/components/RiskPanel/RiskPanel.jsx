@@ -22,6 +22,7 @@ export function RiskPanel({ analysis }) {
     findings = [],
     codeAnalysis = null,
     recommendations = [],
+    simpleExplanation = '',
     confidence = 0
   } = analysis;
 
@@ -73,6 +74,17 @@ export function RiskPanel({ analysis }) {
           summary={summary}
           confidence={confidence}
         />
+
+        {/* 일반인을 위한 쉬운 설명 */}
+        {simpleExplanation && (
+          <div className={`simple-explanation simple-explanation-${riskLevel}`}>
+            <div className="simple-explanation-header">
+              <span className="simple-explanation-icon">💡</span>
+              <span className="simple-explanation-title">쉬운 설명</span>
+            </div>
+            <p className="simple-explanation-text">{simpleExplanation}</p>
+          </div>
+        )}
 
         {/* 구분선 */}
         <div className="panel-divider"></div>

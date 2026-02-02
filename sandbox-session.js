@@ -299,6 +299,16 @@ export class SandboxSession {
       // CDP 클라이언트 연결
       this.cdpClient = await this.page.createCDPSession();
 
+      // CDP를 통한 다운로드 차단
+      try {
+        await this.cdpClient.send('Browser.setDownloadBehavior', {
+          behavior: 'deny',
+        });
+        log(`[Session ${this.id}] 다운로드 차단 설정 완료`);
+      } catch (err) {
+        log(`[Session ${this.id}] 다운로드 차단 설정 실패: ${err.message}`, 'WARN');
+      }
+
       // 페이지 로드
       this.sendStatus('loading', `${url} 로딩 중...`);
       await this.page.goto(url, {
@@ -369,13 +379,6 @@ export class SandboxSession {
    */
   setupDownloadBlocking() {
     if (!this.page) return;
-
-    // CDP를 통한 다운로드 차단
-    this.page.client().send('Browser.setDownloadBehavior', {
-      behavior: 'deny',  // 모든 다운로드 차단
-    }).catch(() => {
-      // 구버전 Puppeteer에서는 무시
-    });
 
     // 다운로드 시도 감지 (response 헤더 분석)
     this.page.on('response', async (response) => {
