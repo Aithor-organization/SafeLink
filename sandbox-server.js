@@ -27,6 +27,13 @@ const __dirname = path.dirname(__filename);
 // 정적 파일 경로
 const STATIC_DIR = path.join(__dirname, 'frontend', 'dist');
 
+// 서버 시작 시 정적 파일 디렉토리 확인
+console.log(`[Static] STATIC_DIR: ${STATIC_DIR}`);
+console.log(`[Static] Directory exists: ${fs.existsSync(STATIC_DIR)}`);
+if (fs.existsSync(STATIC_DIR)) {
+  console.log(`[Static] Files: ${fs.readdirSync(STATIC_DIR).join(', ')}`);
+}
+
 // MIME 타입 매핑
 const MIME_TYPES = {
   '.html': 'text/html',
