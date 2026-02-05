@@ -9,6 +9,12 @@ const getWebSocketUrl = () => {
   return `${protocol}//${host}/sandbox`;
 };
 
+const getApiUrl = (path) => {
+  const host = import.meta.env.VITE_API_HOST || window.location.host;
+  const protocol = window.location.protocol;
+  return `${protocol}//${host}${path}`;
+};
+
 /**
  * WebSocket 기반 샌드박스 연결 훅
  * - 실시간 프레임 수신 및 Canvas 렌더링
@@ -35,7 +41,7 @@ export function useSandbox() {
   }, []);
 
   // WebSocket 연결 및 URL 탐색 시작
-  const connect = useCallback((url) => {
+  const connect = useCallback(async (url) => {
     // 기존 연결 및 타임아웃 종료
     if (wsRef.current) {
       wsRef.current.close();
@@ -46,6 +52,13 @@ export function useSandbox() {
     setAnalysis(null);
     setError(null);
     frameReceivedRef.current = false;
+
+    // 기존 세션 초기화 (백그라운드에서 실행, 실패해도 계속 진행)
+    try {
+      await fetch(getApiUrl('/reset-sessions'), { method: 'POST' });
+    } catch (e) {
+      console.log('세션 초기화 스킵:', e.message);
+    }
 
     const ws = new WebSocket(getWebSocketUrl());
     wsRef.current = ws;
