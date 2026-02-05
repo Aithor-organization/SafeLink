@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+const CONNECTION_TIMEOUT = 10000; // 10초 타임아웃
+
 /**
  * WebSocket 기반 샌드박스 연결 훅
  * - 실시간 프레임 수신 및 Canvas 렌더링
  * - 마우스/키보드 이벤트 전송
  * - 분석 결과 수신
+ * - 10초 연결 타임아웃
  */
 export function useSandbox() {
   const [status, setStatus] = useState('disconnected');
@@ -13,23 +16,46 @@ export function useSandbox() {
   const [blockedDownload, setBlockedDownload] = useState(null);
   const wsRef = useRef(null);
   const canvasRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const frameReceivedRef = useRef(false);
+
+  // 타임아웃 클리어 함수
+  const clearConnectionTimeout = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   // WebSocket 연결 및 URL 탐색 시작
   const connect = useCallback((url) => {
-    // 기존 연결 종료
+    // 기존 연결 및 타임아웃 종료
     if (wsRef.current) {
       wsRef.current.close();
     }
+    clearConnectionTimeout();
 
     setStatus('connecting');
     setAnalysis(null);
     setError(null);
+    frameReceivedRef.current = false;
 
     const ws = new WebSocket('ws://localhost:4000/sandbox');
     wsRef.current = ws;
 
+    // 10초 타임아웃 설정
+    timeoutRef.current = setTimeout(() => {
+      if (!frameReceivedRef.current) {
+        setStatus('timeout');
+        setError('연결 시간이 초과되었습니다. 서버 상태를 확인하거나 다시 시도해주세요.');
+        if (wsRef.current) {
+          wsRef.current.close();
+        }
+      }
+    }, CONNECTION_TIMEOUT);
+
     ws.onopen = () => {
-      setStatus('connected');
+      setStatus('loading');
       // 샌드박스 세션 시작 요청
       ws.send(JSON.stringify({ type: 'start', url }));
     };
@@ -39,6 +65,12 @@ export function useSandbox() {
 
       switch (msg.type) {
         case 'frame':
+          // 첫 프레임 수신 시 타임아웃 클리어
+          if (!frameReceivedRef.current) {
+            frameReceivedRef.current = true;
+            clearConnectionTimeout();
+            setStatus('browsing');
+          }
           // Base64 인코딩된 프레임을 Canvas에 렌더링
           renderFrame(msg.data);
           break;
@@ -67,7 +99,12 @@ export function useSandbox() {
             codeAnalysis: msg.codeAnalysis,
             visualAnalysis: msg.visualAnalysis,
             recommendations: msg.recommendations,
-            confidence: msg.confidence
+            confidence: msg.confidence,
+            // 추가 필드
+            simpleExplanation: msg.simpleExplanation,
+            redirectAnalysis: msg.redirectAnalysis,
+            url: msg.url,
+            originalUrl: msg.originalUrl,
           });
           setStatus('completed');
           break;
@@ -193,6 +230,7 @@ export function useSandbox() {
 
   // 연결 종료
   const disconnect = useCallback(() => {
+    clearConnectionTimeout();
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -201,21 +239,22 @@ export function useSandbox() {
     setAnalysis(null);
     setError(null);
     setBlockedDownload(null);
-  }, []);
+  }, [clearConnectionTimeout]);
 
   // 다운로드 알림 닫기
   const dismissDownloadAlert = useCallback(() => {
     setBlockedDownload(null);
   }, []);
 
-  // 컴포넌트 언마운트 시 연결 종료
+  // 컴포넌트 언마운트 시 연결 및 타임아웃 종료
   useEffect(() => {
     return () => {
+      clearConnectionTimeout();
       if (wsRef.current) {
         wsRef.current.close();
       }
     };
-  }, []);
+  }, [clearConnectionTimeout]);
 
   return {
     status,

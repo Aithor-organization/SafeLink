@@ -12,6 +12,7 @@
  * - 페이지 이동 감지 및 재분석 트리거
  */
 
+import 'dotenv/config';
 import { WebSocketServer } from 'ws';
 import http from 'http';
 import { SandboxSession, SessionManager, validateUrl, log } from './sandbox-session.js';
@@ -28,10 +29,10 @@ const MAX_CONCURRENT_SESSIONS = parseInt(process.env.MAX_SESSIONS, 10) || 1; // 
 // HTTP 서버 생성
 // ============================================
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   // CORS 헤더
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -71,6 +72,32 @@ const server = http.createServer((req, res) => {
         },
       })
     );
+    return;
+  }
+
+  // 세션 초기화 엔드포인트
+  if (req.url === '/reset-sessions' && req.method === 'POST') {
+    try {
+      const clearedCount = await sessionManager.clearAllSessions();
+      log(`모든 세션 초기화 완료: ${clearedCount}개 세션 종료`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          success: true,
+          message: `${clearedCount}개 세션이 초기화되었습니다.`,
+          clearedCount,
+        })
+      );
+    } catch (error) {
+      log(`세션 초기화 오류: ${error.message}`, 'ERROR');
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          success: false,
+          error: error.message,
+        })
+      );
+    }
     return;
   }
 
@@ -118,10 +145,12 @@ wss.on('connection', async (ws, req) => {
   const session = sessionManager.createSession(ws, {
     onNavigation: async (sess, url) => {
       log(`[Session ${sess.id}] 재분석 콜백 트리거: ${url}`);
-      // AI 분석 실행
+      // AI 분석 실행 (원래 URL 전달)
       if (sess.page && sess.isActive) {
         try {
-          await analyzeInBackground(sess.page, (msg) => sess.send(msg));
+          await analyzeInBackground(sess.page, (msg) => sess.send(msg), {
+            originalUrl: sess.originalUrl,
+          });
         } catch (err) {
           log(`[Session ${sess.id}] AI 분석 오류: ${err.message}`, 'ERROR');
         }
@@ -159,13 +188,16 @@ wss.on('connection', async (ws, req) => {
         // 세션 시작
         case 'start':
           if (message.url) {
+            // 원래 URL 저장 (리다이렉트 감지용)
+            session.originalUrl = message.url;
             const success = await session.initialize(message.url);
             if (success) {
               await session.startScreencast();
-              // AI 분석 시작 (백그라운드)
+              // AI 분석 시작 (백그라운드, 원래 URL 전달)
               if (session.page && session.isActive) {
-                analyzeInBackground(session.page, (msg) => session.send(msg))
-                  .catch(err => log(`[Session ${session.id}] AI 분석 오류: ${err.message}`, 'ERROR'));
+                analyzeInBackground(session.page, (msg) => session.send(msg), {
+                  originalUrl: session.originalUrl,
+                }).catch(err => log(`[Session ${session.id}] AI 분석 오류: ${err.message}`, 'ERROR'));
               }
             }
           } else {

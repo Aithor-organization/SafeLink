@@ -4,6 +4,7 @@ import { useEffect, useCallback } from 'react';
  * 샌드박스 Canvas 뷰어
  * - 실시간 브라우저 화면 렌더링
  * - 마우스/키보드 이벤트 캡처 및 전송
+ * - 로딩/에러 상태 표시
  */
 export function SandboxViewer({
   canvasRef,
@@ -11,7 +12,8 @@ export function SandboxViewer({
   onClick,
   onScroll,
   onKeyDown,
-  disabled = false
+  disabled = false,
+  status = 'disconnected'
 }) {
   // 키보드 및 휠 이벤트 리스너 등록
   useEffect(() => {
@@ -94,9 +96,42 @@ export function SandboxViewer({
           backgroundColor: '#1a1a1a'
         }}
       />
-      {disabled && (
+      {/* 상태별 오버레이 */}
+      {status === 'disconnected' && (
         <div className="viewer-overlay">
-          <span>URL을 입력하고 접속 버튼을 클릭하세요</span>
+          <span>URL을 입력하고 안전검사 시작 버튼을 클릭하세요</span>
+        </div>
+      )}
+      {status === 'connecting' && (
+        <div className="viewer-overlay viewer-overlay-loading">
+          <div className="viewer-spinner"></div>
+          <span>서버에 연결 중...</span>
+        </div>
+      )}
+      {status === 'connected' && (
+        <div className="viewer-overlay viewer-overlay-loading">
+          <div className="viewer-spinner"></div>
+          <span>브라우저 준비 중...</span>
+        </div>
+      )}
+      {status === 'loading' && (
+        <div className="viewer-overlay viewer-overlay-loading">
+          <div className="viewer-spinner"></div>
+          <span>페이지 불러오는 중...</span>
+        </div>
+      )}
+      {status === 'timeout' && (
+        <div className="viewer-overlay viewer-overlay-error">
+          <span className="viewer-error-icon">⏱️</span>
+          <span>연결 시간 초과</span>
+          <span className="viewer-error-sub">10초 내에 응답이 없습니다. 다시 시도해주세요.</span>
+        </div>
+      )}
+      {status === 'error' && (
+        <div className="viewer-overlay viewer-overlay-error">
+          <span className="viewer-error-icon">❌</span>
+          <span>연결 실패</span>
+          <span className="viewer-error-sub">서버에 연결할 수 없습니다.</span>
         </div>
       )}
     </div>

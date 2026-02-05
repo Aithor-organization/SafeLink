@@ -229,6 +229,130 @@
 }
 
 /* ============================================
+   리다이렉트 분석 스타일
+   ============================================ */
+
+.redirect-analysis {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border-radius: var(--border-radius);
+  border: 2px solid;
+}
+
+.redirect-analysis-safe {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(76, 175, 80, 0.05));
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.redirect-analysis-warning {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(255, 152, 0, 0.05));
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.redirect-analysis-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.redirect-analysis-icon {
+  font-size: 1.5rem;
+}
+
+.redirect-analysis-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.redirect-analysis-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.redirect-urls {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 6px;
+}
+
+.redirect-url-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.redirect-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.redirect-url {
+  font-family: monospace;
+  font-size: 0.95rem;
+  word-break: break-all;
+}
+
+.redirect-url.original {
+  color: #FF9800;
+}
+
+.redirect-url.current {
+  color: #4CAF50;
+}
+
+.redirect-arrow {
+  text-align: center;
+  font-size: 1.25rem;
+  color: var(--color-text-muted);
+  padding: 0.5rem 0;
+}
+
+.redirect-reason {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  border-left: 3px solid var(--color-secondary);
+}
+
+.redirect-safety {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+}
+
+.redirect-safety.safe {
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.redirect-safety.warning {
+  background: rgba(255, 152, 0, 0.15);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.safety-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.safety-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+/* ============================================
    CodeFindings 스타일
    ============================================ */
 

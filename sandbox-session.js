@@ -257,15 +257,38 @@ export class SandboxSession {
       this.sendStatus('loading', 'Puppeteer 브라우저 시작 중...');
       this.resetTimeout();
 
-      // Puppeteer 브라우저 시작
+      // Puppeteer 브라우저 시작 (보안 강화 옵션)
       this.browser = await puppeteer.launch({
         headless: true,
         args: [
+          // 기본 샌드박스 설정
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-web-security',
+
+          // 격리 및 보안 강화
+          '--incognito',                        // 시크릿 모드 (쿠키/캐시 격리)
+          '--disable-extensions',               // 확장 프로그램 비활성화
+          '--disable-plugins',                  // 플러그인 비활성화
+          '--disable-sync',                     // 동기화 비활성화
+          '--no-first-run',                     // 첫 실행 마법사 비활성화
+          '--disable-background-networking',    // 백그라운드 네트워크 비활성화
+          '--disable-default-apps',             // 기본 앱 비활성화
+          '--disable-translate',                // 번역 비활성화
+          '--disable-component-update',         // 컴포넌트 업데이트 비활성화
+          '--disable-background-timer-throttling', // 타이머 스로틀링 비활성화
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+          '--mute-audio',                       // 오디오 음소거
+
+          // 네트워크 보안
+          '--disable-web-security',             // CORS 우회 (데모용)
           '--disable-features=IsolateOrigins,site-per-process',
+
+          // 리소스 제한
+          '--disable-gpu',                      // GPU 비활성화
+          '--disable-software-rasterizer',
+          '--disable-accelerated-2d-canvas',
         ],
       });
 
@@ -1069,6 +1092,16 @@ export class SessionManager {
     this.sessions.clear();
 
     log('모든 세션 정리 완료');
+  }
+
+  /**
+   * 모든 세션 강제 초기화 (API용)
+   * @returns {Promise<number>} 초기화된 세션 수
+   */
+  async clearAllSessions() {
+    const count = this.sessions.size;
+    await this.cleanupAll();
+    return count;
   }
 
   /**

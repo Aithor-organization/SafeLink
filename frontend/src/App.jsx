@@ -30,6 +30,27 @@ function App() {
 
   const detailRef = useRef(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
+  // 세션 초기화
+  const resetSessions = async () => {
+    if (resetting) return;
+    setResetting(true);
+    try {
+      const res = await fetch('http://localhost:4000/reset-sessions', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ ${data.message}`);
+        window.location.reload();
+      } else {
+        alert(`❌ 초기화 실패: ${data.error}`);
+      }
+    } catch (err) {
+      alert(`❌ 서버 연결 오류: ${err.message}`);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   // 상세 보기 클릭 시 스크롤
   const scrollToDetail = () => {
@@ -103,7 +124,12 @@ function App() {
         suspiciousPatterns: []
       },
       recommendations: analysis.recommendations || [],
-      confidence: analysis.confidence || 85
+      confidence: analysis.confidence || 85,
+      // 추가 필드
+      simpleExplanation: analysis.simpleExplanation || '',
+      redirectAnalysis: analysis.redirectAnalysis || null,
+      url: analysis.url || '',
+      originalUrl: analysis.originalUrl || '',
     };
   };
 
@@ -168,6 +194,17 @@ function App() {
             {isActive && (
               <button className="disconnect-btn" onClick={disconnect}>
                 세션 종료
+              </button>
+            )}
+
+            {!isActive && (
+              <button
+                className="reset-btn"
+                onClick={resetSessions}
+                disabled={resetting}
+                title="서버의 모든 세션을 강제 종료합니다"
+              >
+                {resetting ? '초기화 중...' : '🔄 세션 초기화'}
               </button>
             )}
           </div>
@@ -255,6 +292,7 @@ function App() {
             onScroll={sendScroll}
             onKeyDown={sendKeyDown}
             disabled={!isActive}
+            status={status}
           />
         </section>
 

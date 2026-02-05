@@ -23,7 +23,8 @@ export function RiskPanel({ analysis }) {
     codeAnalysis = null,
     recommendations = [],
     simpleExplanation = '',
-    confidence = 0
+    confidence = 0,
+    redirectAnalysis = null
   } = analysis;
 
   // 로딩 상태
@@ -74,6 +75,38 @@ export function RiskPanel({ analysis }) {
           summary={summary}
           confidence={confidence}
         />
+
+        {/* 리다이렉트 분석 결과 */}
+        {redirectAnalysis && redirectAnalysis.occurred && (
+          <div className={`redirect-analysis redirect-analysis-${redirectAnalysis.isSafe ? 'safe' : 'warning'}`}>
+            <div className="redirect-analysis-header">
+              <span className="redirect-analysis-icon">🔀</span>
+              <span className="redirect-analysis-title">리다이렉트 감지됨</span>
+            </div>
+            <div className="redirect-analysis-content">
+              <div className="redirect-urls">
+                <div className="redirect-url-item">
+                  <span className="redirect-label">입력한 주소:</span>
+                  <span className="redirect-url original">{redirectAnalysis.originalUrl}</span>
+                </div>
+                <div className="redirect-arrow">↓</div>
+                <div className="redirect-url-item">
+                  <span className="redirect-label">도착한 주소:</span>
+                  <span className="redirect-url current">{analysis.url || '현재 페이지'}</span>
+                </div>
+              </div>
+              {redirectAnalysis.reason && (
+                <p className="redirect-reason">{redirectAnalysis.reason}</p>
+              )}
+              {redirectAnalysis.safetyExplanation && (
+                <div className={`redirect-safety ${redirectAnalysis.isSafe ? 'safe' : 'warning'}`}>
+                  <span className="safety-icon">{redirectAnalysis.isSafe ? '✅' : '⚠️'}</span>
+                  <span className="safety-text">{redirectAnalysis.safetyExplanation}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 일반인을 위한 쉬운 설명 */}
         {simpleExplanation && (

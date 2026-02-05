@@ -14,6 +14,170 @@ const MODEL_NAME = 'google/gemini-3-flash-preview';
 const ANALYSIS_TIMEOUT = 60000; // 60초
 
 // ============================================
+// 리다이렉트 감지 함수
+// ============================================
+
+/**
+ * URL 리다이렉트 감지 및 분석
+ * @param {string} originalUrl - 사용자가 입력한 원래 URL
+ * @param {string} currentUrl - 최종 도착한 URL
+ * @returns {Object} 리다이렉트 정보
+ */
+function detectRedirect(originalUrl, currentUrl) {
+  // URL 정규화
+  const normalizeUrl = (url) => {
+    try {
+      const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+      return {
+        full: parsed.href,
+        hostname: parsed.hostname.toLowerCase(),
+        pathname: parsed.pathname,
+      };
+    } catch {
+      return { full: url, hostname: url, pathname: '/' };
+    }
+  };
+
+  const original = normalizeUrl(originalUrl);
+  const current = normalizeUrl(currentUrl);
+
+  // 리다이렉트 여부 확인
+  const redirected = original.hostname !== current.hostname;
+
+  // 타이포스쿼팅 감지 (예: amaz0n → amazon)
+  const typosquatting = detectTyposquatting(original.hostname, current.hostname);
+
+  // 도메인 유사도 분석
+  const domainSimilarity = calculateSimilarity(original.hostname, current.hostname);
+
+  return {
+    redirected,
+    originalUrl: original.full,
+    currentUrl: current.full,
+    originalDomain: original.hostname,
+    currentDomain: current.hostname,
+    typosquatting,
+    domainSimilarity,
+    explanation: generateRedirectExplanation(original, current, typosquatting),
+  };
+}
+
+/**
+ * 타이포스쿼팅 패턴 감지
+ * @param {string} original - 원래 도메인
+ * @param {string} target - 최종 도메인
+ * @returns {Object} 타이포스쿼팅 정보
+ */
+function detectTyposquatting(original, target) {
+  // 숫자-문자 치환 패턴 (0↔o, 1↔l, 3↔e, 5↔s 등)
+  const leetPatterns = {
+    '0': 'o', 'o': '0',
+    '1': 'l', 'l': '1', 'i': '1',
+    '3': 'e', 'e': '3',
+    '5': 's', 's': '5',
+    '4': 'a', 'a': '4',
+    '7': 't', 't': '7',
+    '8': 'b', 'b': '8',
+  };
+
+  // 원래 도메인을 정규화하여 비교
+  const normalizeForComparison = (domain) => {
+    let normalized = domain.toLowerCase();
+    for (const [key, value] of Object.entries(leetPatterns)) {
+      normalized = normalized.replace(new RegExp(key, 'g'), value);
+    }
+    return normalized.replace(/[^a-z]/g, '');
+  };
+
+  const normalizedOriginal = normalizeForComparison(original);
+  const normalizedTarget = normalizeForComparison(target);
+
+  // 숫자 사용 감지
+  const hasNumbers = /\d/.test(original);
+  const numbersUsed = original.match(/\d/g) || [];
+
+  // 의심스러운 치환 감지
+  const suspiciousSubstitutions = [];
+  for (let i = 0; i < original.length; i++) {
+    const char = original[i];
+    if (leetPatterns[char]) {
+      suspiciousSubstitutions.push({
+        position: i,
+        original: char,
+        looksLike: leetPatterns[char],
+      });
+    }
+  }
+
+  const isTyposquatting = hasNumbers && normalizedOriginal === normalizedTarget;
+
+  return {
+    detected: isTyposquatting,
+    hasNumbers,
+    numbersUsed,
+    suspiciousSubstitutions,
+    normalizedMatch: normalizedOriginal === normalizedTarget,
+  };
+}
+
+/**
+ * 두 문자열의 유사도 계산 (Levenshtein 기반)
+ */
+function calculateSimilarity(str1, str2) {
+  const len1 = str1.length;
+  const len2 = str2.length;
+  const matrix = Array(len1 + 1).fill(null).map(() => Array(len2 + 1).fill(null));
+
+  for (let i = 0; i <= len1; i++) matrix[i][0] = i;
+  for (let j = 0; j <= len2; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  const distance = matrix[len1][len2];
+  const maxLen = Math.max(len1, len2);
+  return maxLen === 0 ? 1 : 1 - distance / maxLen;
+}
+
+/**
+ * 리다이렉트 설명 생성
+ */
+function generateRedirectExplanation(original, current, typosquatting) {
+  if (!typosquatting.detected && original.hostname === current.hostname) {
+    return null;
+  }
+
+  const explanations = [];
+
+  if (typosquatting.detected) {
+    const substitutions = typosquatting.suspiciousSubstitutions
+      .map(s => `"${s.original}"가 "${s.looksLike}"처럼 보임`)
+      .join(', ');
+
+    explanations.push(
+      `⚠️ 주의: 입력하신 주소(${original.hostname})에서 숫자가 문자처럼 사용되었습니다 (${substitutions}).`,
+      `이것은 "타이포스쿼팅"이라는 피싱 기법일 수 있습니다.`,
+      `다행히 이 주소는 공식 사이트(${current.hostname})로 자동 이동되었습니다.`
+    );
+  } else if (original.hostname !== current.hostname) {
+    explanations.push(
+      `ℹ️ 리다이렉트 발생: ${original.hostname} → ${current.hostname}`,
+      `입력한 주소에서 다른 주소로 자동 이동되었습니다.`
+    );
+  }
+
+  return explanations.join(' ');
+}
+
+// ============================================
 // 데이터 수집 함수
 // ============================================
 
@@ -191,11 +355,45 @@ export async function getMetaInfo(page) {
 // ============================================
 
 /**
+ * 리다이렉트 정보 섹션 생성
+ * @param {Object} redirectInfo - 리다이렉트 정보
+ * @returns {string} 리다이렉트 섹션 텍스트
+ */
+function buildRedirectSection(redirectInfo) {
+  if (!redirectInfo || !redirectInfo.redirected) {
+    return '';
+  }
+
+  let section = `
+### ⚠️ 리다이렉트 감지됨
+- **원래 입력 URL**: ${redirectInfo.originalUrl}
+- **최종 도착 URL**: ${redirectInfo.currentUrl}
+- **원래 도메인**: ${redirectInfo.originalDomain}
+- **최종 도메인**: ${redirectInfo.currentDomain}`;
+
+  if (redirectInfo.typosquatting && redirectInfo.typosquatting.detected) {
+    section += `
+- **타이포스쿼팅 의심**: 예 (숫자가 문자처럼 사용됨)
+- **사용된 숫자**: ${redirectInfo.typosquatting.numbersUsed.join(', ')}`;
+  }
+
+  section += `
+
+**중요**: 이 리다이렉트가 왜 발생했는지, 그리고 이것이 안전한지 위험한지 반드시 설명해주세요.
+- 타이포스쿼팅(예: amaz0n.com → amazon.com)인 경우, 공식 사이트가 오타 도메인을 보호 목적으로 소유한 것인지 설명
+- 피싱 사이트가 정보 수집 후 공식 사이트로 리다이렉트하는 것인지 설명
+- 일반인이 이해할 수 있도록 "왜 이런 일이 발생했는지" 친절하게 설명`;
+
+  return section;
+}
+
+/**
  * 멀티모달 분석 프롬프트 생성
  * @param {Object} data - 수집된 분석 데이터
+ * @param {Object} redirectInfo - 리다이렉트 정보
  * @returns {string} 분석 프롬프트
  */
-function buildMultimodalPrompt(data) {
+function buildMultimodalPrompt(data, redirectInfo = null) {
   const { url, html, forms, scripts, title } = data;
 
   // HTML 요약 (토큰 절약을 위해 중요 부분만)
@@ -207,6 +405,9 @@ function buildMultimodalPrompt(data) {
   // 스크립트 분석 요약
   const scriptsSummary = summarizeScripts(scripts);
 
+  // 리다이렉트 섹션
+  const redirectSection = buildRedirectSection(redirectInfo);
+
   return `당신은 사이버 보안 전문가이자 일반인을 위한 보안 교육자입니다.
 다음 웹페이지를 분석하여 피싱, 스캠, 악성코드 위험도를 평가해주세요.
 
@@ -215,8 +416,9 @@ function buildMultimodalPrompt(data) {
 
 ## 분석 대상 정보
 
-**URL**: ${url}
+**현재 URL**: ${url}
 **페이지 제목**: ${title || '없음'}
+${redirectSection}
 
 ### HTML 구조 분석
 ${htmlSummary}
@@ -269,11 +471,18 @@ ${scriptsSummary}
     "fakeSecurityBadges": true | false,
     "description": "화면에서 발견된 내용을 일반인이 이해할 수 있게 설명. 예: '이 사이트는 네이버 로그인 페이지처럼 보이지만, 자세히 보면 로고 품질이 낮고 주소가 다릅니다. 진짜 네이버가 아닌 가짜 사이트입니다.'"
   },
+  "redirectAnalysis": {
+    "occurred": true | false,
+    "originalUrl": "사용자가 입력한 원래 URL (리다이렉트 발생 시에만)",
+    "reason": "리다이렉트가 발생한 이유를 일반인이 이해할 수 있게 설명. 예: '입력하신 주소 amaz0n.com에서 숫자 0이 영문자 o 대신 사용되었습니다. 이것은 피싱 사기꾼들이 자주 쓰는 \"타이포스쿼팅\" 기법입니다. 다행히 아마존이 이 주소를 미리 확보해두어 공식 사이트로 자동 연결되었습니다.'",
+    "isSafe": true | false,
+    "safetyExplanation": "이 리다이렉트가 안전한 이유 또는 위험한 이유 설명"
+  },
   "recommendations": [
     "구체적인 행동 지침 1 (예: '이 사이트에서 절대로 비밀번호를 입력하지 마세요')",
     "구체적인 행동 지침 2 (예: '이미 정보를 입력했다면 즉시 해당 계정의 비밀번호를 변경하세요')"
   ],
-  "simpleExplanation": "비개발자를 위한 전체 요약 설명. 이 사이트가 왜 안전한지/위험한지를 초등학생도 이해할 수 있는 수준으로 2-3문장으로 설명해주세요.",
+  "simpleExplanation": "비개발자를 위한 전체 요약 설명. 이 사이트가 왜 안전한지/위험한지를 초등학생도 이해할 수 있는 수준으로 2-3문장으로 설명해주세요. 리다이렉트가 발생한 경우 반드시 이 사실과 이유를 포함해서 설명해주세요.",
   "confidence": 0-100 사이의 분석 신뢰도
 }`;
 }
@@ -401,9 +610,10 @@ function summarizeScripts(scripts) {
 /**
  * 멀티모달 AI 분석 실행
  * @param {Object} data - 수집된 분석 데이터
+ * @param {Object} redirectInfo - 리다이렉트 정보 (선택)
  * @returns {Promise<Object>} AI 분석 결과
  */
-export async function analyzeWithAIMultimodal(data) {
+export async function analyzeWithAIMultimodal(data, redirectInfo = null) {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
@@ -422,11 +632,18 @@ export async function analyzeWithAIMultimodal(data) {
       },
       recommendations: ['수동 검토가 필요합니다.'],
       confidence: 0,
+      redirectAnalysis: redirectInfo ? {
+        occurred: redirectInfo.redirected,
+        originalUrl: redirectInfo.originalUrl,
+        reason: '분석 불가',
+        isSafe: null,
+        safetyExplanation: 'AI 분석 없이 판단 불가',
+      } : null,
     };
   }
 
   try {
-    const prompt = buildMultimodalPrompt(data);
+    const prompt = buildMultimodalPrompt(data, redirectInfo);
     const messages = buildMultimodalMessages(prompt, data.screenshot);
 
     const controller = new AbortController();
@@ -590,6 +807,8 @@ function parseAIResponse(content) {
       recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
       simpleExplanation: parsed.simpleExplanation ?? '',
       confidence: parsed.confidence ?? 50,
+      // 리다이렉트 분석 결과 추가
+      redirectAnalysis: parsed.redirectAnalysis ?? null,
     };
 
   } catch (error) {
@@ -628,14 +847,20 @@ function parseAIResponse(content) {
  * @returns {Promise<void>}
  */
 export async function analyzeInBackground(page, sendMessage, options = {}) {
-  const url = page.url();
+  const currentUrl = page.url();
+  const originalUrl = options.originalUrl || currentUrl;
   const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+  // 리다이렉트 감지
+  const redirectInfo = detectRedirect(originalUrl, currentUrl);
 
   // 분석 시작 알림
   sendMessage({
     type: 'analysis_started',
     analysisId,
-    url,
+    url: currentUrl,
+    originalUrl,
+    redirected: redirectInfo.redirected,
     timestamp: new Date().toISOString(),
   });
 
@@ -676,13 +901,15 @@ export async function analyzeInBackground(page, sendMessage, options = {}) {
       message: 'AI 멀티모달 분석 중...',
     });
 
-    const result = await analyzeWithAIMultimodal({ ...data, metaInfo });
+    const result = await analyzeWithAIMultimodal({ ...data, metaInfo }, redirectInfo);
 
     // 3. 분석 완료 알림
     sendMessage({
       type: 'analysis_complete',
       analysisId,
       url: data.url,
+      originalUrl,
+      redirected: redirectInfo.redirected,
       title: data.title,
       timestamp: new Date().toISOString(),
       ...result,
