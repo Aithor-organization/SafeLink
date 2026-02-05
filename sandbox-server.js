@@ -48,7 +48,8 @@ import { analyzeInBackground } from './live-analyzer.js';
 // 상수 정의
 // ============================================
 
-const PORT = process.env.SANDBOX_PORT || 4000;
+// Railway는 PORT 환경변수를 사용함
+const PORT = process.env.PORT || process.env.SANDBOX_PORT || 4000;
 const MAX_CONCURRENT_SESSIONS = parseInt(process.env.MAX_SESSIONS, 10) || 1; // 로컬 데모용: 1개
 
 // ============================================

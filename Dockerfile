@@ -51,16 +51,12 @@ COPY .env.example ./.env.example
 # Frontend 빌드 결과물 복사
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# 포트 설정
-ENV PORT=4000
-ENV SANDBOX_PORT=4000
+# 환경 설정 (PORT는 Railway가 자동 할당)
 ENV NODE_ENV=production
 
-EXPOSE 4000
+# Railway가 PORT를 동적으로 할당하므로 EXPOSE 생략
 
-# 헬스체크
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "fetch('http://localhost:4000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+# Railway가 자체 헬스체크 사용 (railway.toml 설정)
 
 # 서버 실행
 CMD ["node", "sandbox-server.js"]
