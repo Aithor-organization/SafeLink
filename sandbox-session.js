@@ -291,8 +291,8 @@ export class SandboxSession {
           '--disable-accelerated-2d-canvas',
 
           // === 성능 최적화 (Railway 환경) ===
-          '--single-process',                   // 단일 프로세스 모드 (메모리 절감)
-          '--no-zygote',                        // Zygote 프로세스 비활성화
+          // '--single-process',                // 컨테이너에서 불안정 - 비활성화
+          // '--no-zygote',                     // single-process 없이 사용 불가
           '--disable-breakpad',                 // 크래시 리포트 비활성화
           '--disable-hang-monitor',             // 행 모니터 비활성화
           '--disable-popup-blocking',           // 팝업 차단 비활성화
