@@ -754,3 +754,41 @@ body {
     transform: rotate(360deg);
   }
 }
+
+/* ===== 분석 중 로딩 패널 ===== */
+.analyzing-section {
+  margin-top: 1rem;
+}
+
+.analyzing-panel {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #333;
+  border-radius: var(--border-radius);
+  padding: 3rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.analyzing-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--color-secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.analyzing-panel h3 {
+  color: var(--color-secondary);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.analyzing-panel p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}

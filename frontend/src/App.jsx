@@ -321,6 +321,17 @@ function App() {
             <RiskPanel analysis={riskPanelData} />
           </section>
         )}
+
+        {/* 분석 중 로딩 (상세 패널 위치) */}
+        {status === 'analyzing' && !riskPanelData && (
+          <section className="detail-section analyzing-section" ref={detailRef}>
+            <div className="analyzing-panel">
+              <div className="analyzing-spinner"></div>
+              <h3>🔍 위험도 분석중...</h3>
+              <p>AI가 페이지의 보안 위협을 분석하고 있습니다</p>
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className="app-footer">
